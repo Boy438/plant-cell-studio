@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cell Architecture Studio · 植物细胞 3D 交互课件</title>
+<link rel="stylesheet" href="./assets/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">✿</div>
+    <div class="brand-text">
+      <h1>Cell Architecture Studio</h1>
+      <p>植物细胞 · 交互式 3D 课件 <span>Explore life at the microscopic level</span></p>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active">画廊</button>
+    <button class="nav-btn" data-todo>模型库</button>
+    <button class="nav-btn" data-todo>笔记</button>
+    <button class="nav-btn" data-todo>设置</button>
+    <span class="badge">教师版 · 离线可用</span>
+  </nav>
+</header>
+
+<main class="layout">
+
+  <aside class="panel left">
+    <section class="block">
+      <h2>细胞类型</h2>
+      <div id="cell-types" class="cell-types"></div>
+    </section>
+
+    <section class="block">
+      <h2>细胞器 <em>点击查看知识点</em></h2>
+      <div id="organelle-list" class="org-list"></div>
+      <p class="tip">点细胞内部 = 选中液泡 / 细胞器；点细胞边缘 = 选中细胞膜。</p>
+    </section>
+
+    <section class="block">
+      <h2>剖面观察</h2>
+      <div class="clip-wrap">
+        <div id="clip-track" class="clip-track"><div id="clip-knob" class="clip-knob"></div></div>
+        <p class="tip">已默认切开观察内部结构；拖动滑块调整切面，双击滑块恢复完整细胞。</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>快捷键</h2>
+      <p class="tip"><b>R</b> 复位视角 · <b>L</b> 显示/隐藏标注 · <b>S</b> 截图 · <b>Esc</b> 退出自测</p>
+    </section>
+  </aside>
+
+  <section class="stage">
+    <div id="canvas-host" class="canvas-host"></div>
+
+    <div class="stage-header">
+      <div>
+        <p class="eyebrow">交互式学习工作台</p>
+        <h2 id="stage-title">植物细胞 Plant Cell</h2>
+        <p class="stage-sub" id="stage-sub">选择结构 → 放大聚焦 → 阅读知识点 → 剖面观察 → 考点自测</p>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button id="btn-spin" class="tool">自动旋转</button>
+      <button id="btn-labels" class="tool on">标注</button>
+      <button id="btn-isolate" class="tool">隔离显示</button>
+      <button id="btn-reset" class="tool">复位视角</button>
+      <button id="btn-tour" class="tool">一键导览</button>
+      <button id="btn-quiz" class="tool primary">考点自测</button>
+      <button id="btn-present" class="tool">放大观察</button>
+      <button id="btn-shot" class="tool">截图</button>
+      <button id="btn-gltf" class="tool">导出 GLB</button>
+    </div>
+
+    <div id="present-bar" class="present-bar">
+      <span class="pb-dot"></span>
+      <div class="pb-text"><b id="present-name">结构</b><i id="present-en">Structure</i></div>
+      <button id="btn-back" class="pb-back">返回细胞视图</button>
+    </div>
+
+    <div id="hint" class="hint"></div>
+    <div id="stats" class="stats"></div>
+    <div id="toast" class="toast"></div>
+
+    <div id="quiz" class="quiz">
+      <button id="quiz-close" class="quiz-close" type="button">✕</button>
+      <p class="eyebrow">考点自测</p>
+      <h3 id="quiz-q">题目</h3>
+      <p id="quiz-progress" class="quiz-progress"></p>
+      <p id="quiz-fb" class="quiz-fb"></p>
+      <p class="tip">提示：直接在 3D 模型上点击，或使用左侧细胞器列表作答。</p>
+    </div>
+
+    <div id="loading" class="loading on">
+      <div class="spinner"></div>
+      <p>正在装配植物细胞模型…</p>
+    </div>
+  </section>
+
+  <aside class="panel right">
+    <div id="details"></div>
+  </aside>
+
+</main>
+
+<script type="module" src="./src/main.js"></script>
+<script>
+  document.querySelectorAll('[data-todo]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var t = document.getElementById('toast');
+      t.textContent = '该栏目为预留扩展位（可接课堂笔记 / 更多细胞类型）';
+      t.classList.add('on');
+      clearTimeout(window.__h);
+      window.__h = setTimeout(function () { t.classList.remove('on'); }, 2000);
+    });
+  });
+</script>
+</body>
+</html>

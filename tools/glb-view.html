@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>GLB 预览</title>
+<style>html,body{margin:0;background:#eceae6;overflow:hidden}#h{position:absolute;inset:0}</style>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three.module.js", "three/addons/": "../vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="h"></div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const q = new URLSearchParams(location.search);
+const url = q.get('f') || '../models/chloroplast-ai.glb';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(900, 900);
+renderer.setPixelRatio(1);
+renderer.toneMapping = THREE.NeutralToneMapping !== undefined ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.getElementById('h').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#eceae6');
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.85;
+
+const cam = new THREE.PerspectiveCamera(32, 1, 0.01, 100);
+const k = new THREE.DirectionalLight(0xffffff, 2.4); k.position.set(2.5, 3, 2.5); scene.add(k);
+const f = new THREE.DirectionalLight(0xdfe9ff, 1.0); f.position.set(-3, 0.5, -2); scene.add(f);
+const r = new THREE.DirectionalLight(0xffe6c0, 1.3); r.position.set(-1, -2.5, 2); scene.add(r);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xdddddd, 0.5));
+
+new GLTFLoader().load(url, (g) => {
+  const obj = g.scene;
+  obj.traverse((o) => {
+    if (o.isMesh && o.material) {
+      o.material.vertexColors = true;
+      o.material.roughness = 0.45;
+      o.material.metalness = 0.0;
+      o.material.side = THREE.DoubleSide;
+    }
+  });
+  scene.add(obj);
+  const box = new THREE.Box3().setFromObject(obj);
+  const sph = box.getBoundingSphere(new THREE.Sphere());
+  const d = sph.radius / Math.tan(THREE.MathUtils.degToRad(16)) * 1.05;
+  cam.position.copy(sph.center.clone().add(new THREE.Vector3(0.6, 0.42, 1).normalize().multiplyScalar(d)));
+  cam.lookAt(sph.center);
+  renderer.render(scene, cam);
+  window.__info = { verts: 0, radius: sph.radius, tris: 0 };
+  obj.traverse((o) => { if (o.isMesh) { window.__info.tris += o.geometry.index ? o.geometry.index.count / 3 : o.geometry.attributes.position.count / 3; } });
+  window.__ready = true;
+}, undefined, (e) => { window.__err = String(e); window.__ready = true; });
+</script>
+</body>
+</html>

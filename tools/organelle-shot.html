@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>单细胞器透明底渲染（供 AI 图生 3D 使用）</title>
+<style>html,body{margin:0;background:transparent;overflow:hidden}#h{position:absolute;inset:0;display:grid;place-items:center}</style>
+<script type="importmap">
+{ "imports": { "three": "../vendor/three.module.js", "three/addons/": "../vendor/jsm/" } }
+</script>
+</head>
+<body>
+<div id="h"></div>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildPlantCell } from '../src/cellFactory.js';
+
+const id = new URLSearchParams(location.search).get('id') || 'chloroplast';
+const size = Number(new URLSearchParams(location.search).get('size') || 1024);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(size, size);
+renderer.toneMapping = THREE.NeutralToneMapping !== undefined ? THREE.NeutralToneMapping : THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+document.getElementById('h').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.7;
+
+const { parts } = buildPlantCell();
+Object.keys(parts).forEach((k) => { parts[k].visible = (k === id); });
+scene.add(parts[id].parent || parts[id]);
+
+/* 多实例细胞器只保留一个实例作为参考图 */
+let target = parts[id];
+const kids = parts[id].children.filter((c) => c.children && c.children.length > 0);
+if (kids.length > 1) {
+  kids.forEach((c, i) => { c.visible = (i === 0); });
+  target = kids[0];
+}
+const box = new THREE.Box3().setFromObject(target);
+const sph = box.getBoundingSphere(new THREE.Sphere());
+const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 200);
+const dist = (sph.radius / Math.tan(THREE.MathUtils.degToRad(15))) * 1.12;
+cam.position.copy(sph.center.clone().add(new THREE.Vector3(0.72, 0.48, 1).normalize().multiplyScalar(dist)));
+cam.lookAt(sph.center);
+
+const keyL = new THREE.DirectionalLight(0xffffff, 2.6); keyL.position.set(2.5, 3, 2.5); scene.add(keyL);
+const fill = new THREE.DirectionalLight(0xdfe9ff, 1.1); fill.position.set(-3, 0.5, -2); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffe6c0, 1.5); rim.position.set(-1, -2.5, 2); scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xdddddd, 0.6));
+
+renderer.render(scene, cam);
+window.__shot = { id, radius: sph.radius, center: sph.center.toArray() };
+window.__ready = true;
+</script>
+</body>
+</html>
